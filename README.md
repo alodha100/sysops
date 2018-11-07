@@ -254,7 +254,38 @@ It shows a __timeline__ for when things are changed.  In our example, Config rep
 
 
 
+# Deployment & Provisioning EC2
+Things I was iffy on:
+* Placement group: spread or cluster, put instances in same AZ for less latency.  
+* T2/T3 Unlimited: burst CPU (I think you use credits)
 
+Let's fire up an Apache Website
+```
+yum update -y
+yum install httpd -y
+service httpd start
+chkconfig httpd on 
+echo "<html><body><center><h1>Hello Apache</h1></center></body></html>" > /var/www/html/index.html
+```
+
+### Troubleshooting: 
+**InstanceLimitExceed** error: too many instances in that region (20 default).  
+Solve: You need to request more.
+
+**InsufficientInstanceCapacity** error: AWS is out of that hardware instance type.  
+Solve: Wait for more; request less instances; try different instance type; request in different AZ.
+
+## EBS IOPS
+* io1 goes 10k up to 32k IOPS
+* NoSQL or relational DB with latency sensitive workloads
+
+what happens if you max your IOPS on a gp2?
+* I/O requests start queueing
+* you get thrashed
+
+solutions:
+* increase your volume size, because volume size and IOPS are directly proportional up to 3,333GB.  3 IOPS per GB
+* upgrade storage class from gp2 to io1
 
 
 
