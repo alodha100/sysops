@@ -1,8 +1,11 @@
 {
     "cSpell.words": [
         "Amzn",
+        "ELBs",
         "Elasti",
         "bootable",
+        "chkconfig",
+        "httpd",
         "pems"
     ]
 }

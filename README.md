@@ -112,7 +112,7 @@ You can now modify (capacity, type) EBS volumes on the fly (no longer have to st
 
 Types: 
 1. Application: layer 7
-2. Network: layer 4 transport (high throughput)
+2. Network: layer 4 transport (high throughput, TCP)
 3. Classic (elastic)
 
 Ways to monitor:
@@ -254,8 +254,8 @@ It shows a __timeline__ for when things are changed.  In our example, Config rep
 
 
 
-# Deployment & Provisioning EC2
-Things I was iffy on:
+# Deployment & Provisioning
+Things I was iffy on for EC2:
 * Placement group: spread or cluster, put instances in same AZ for less latency.  
 * T2/T3 Unlimited: burst CPU (I think you use credits)
 
@@ -286,6 +286,54 @@ what happens if you max your IOPS on a gp2?
 solutions:
 * increase your volume size, because volume size and IOPS are directly proportional up to 3,333GB.  3 IOPS per GB
 * upgrade storage class from gp2 to io1
+
+## Bastion Host 
+Host located in your public subnet with a route to the internet via gateway.  Use this subnet to jump to your private subnet via ssh or rdp.  Make sure to lock down your bastion host (restrict IP and ports)
+
+## ELB
+You can pre-warm your ELBs by contacting AWS if you expect a massive surge in traffic to ensure your ELB can handle the traffic.
+
+IP address: Application LB have changing IP addresses as they are brought into service.  Network LB get **static IP** address (one per subnet).  This makes firewall rules are a breeze.  You can put a ALB behind a NLB to get the best of both worlds.  Exam tip: if it needs static, you need need Network LB.
+
+### ELB Error Messages:
+* **4xx** client side error; think 404 for bad URL (client mistake)
+
+  * **400**: bad request (bad header)  
+  * **401**: unauthorized - user access denied
+  * **403**: forbidden - request block by firewall ACL
+  * **460**: client closed connection - LB didn't have time to respond and client timed out the server
+  * **463**: LB received an X-Forward-For request header that was rubbish
+
+* **5xx** server side error; think 500 the 5 is an "S" for server side
+
+  * **500** internal server error (LB s the bed)
+  * **502** bad gateway: app server closed connection or bad response
+  * **503** Unavailable - no registered target
+  * **504** Gateway timeout - application is not responding
+  * **561** Unauthorized - check IAM
+
+
+### CloudWatch for ELB
+
+* CW can monitor the ELB and its backend instance
+* Default for ELB is 60sec
+
+1. Overall Health:
+  * **BackendConnectionErrors**: number of unsuccessful connections to the backend instance
+  * **HealthHostCount**: count of healthy instances registered
+  * **UnHealthyCount**
+  * **HTTPCode_Backend_2XX-5XX**: all of our HTTP return codes
+  
+  2. Performance
+  * **Latency**
+  * **RequestCount**: number of completed requests / connections
+  * **SurgeQueueLength**: classic LB; number of pending requests (size 1024)
+  * **SpilloverCount**: classic LB; if queue is full, this is count of dropped
+
+
+
+
+
 
 
 
