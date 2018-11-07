@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 # [AWS Certified SysOps Administrator - Associate](https://aws.amazon.com/certification/certified-sysops-admin-associate/)
-=======
-# [AWS Certified SysOps Administrator - Associate](https://aws.amazon.com/certification/certified-sysops-admin-associate)
->>>>>>> 1caa3b4824ea4b772e93e642a16a835d745a61d9
 *These are my notes*
 
 # CloudWatch
