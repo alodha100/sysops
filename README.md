@@ -104,7 +104,75 @@ Credits:
   * Warning - degraded, severely degraded
   * Impaired - stalled, not available
 
-You can now modify EBS volumes on the fly (no longer have to stop)  
+You can now modify (capacity, type) EBS volumes on the fly (no longer have to stop)  
+
+## Monitoring ELB
+
+Types: 
+1. Application: layer 7
+2. Network: layer 4 transport (high throughput)
+3. Classic (elastic)
+
+Ways to monitor:
+1. CloudWatch (monitor performance)
+  * when you spin up ELB, you default get CloudWatch.  No IAM required
+2. Access logs
+  * disabled by default, dumps to S3. 
+  * think auditing like who, when, what (400, 500 errors) accessed ELB 
+  * 5 or 60min intervals
+  * even if EC2 is deleted (auto scaling), S3 data logs persist
+  * Athena is good for parsing these massive logs
+3. Request tracing
+  * track HTTP requests from clients to target resources
+  * updates the X-Amzn-Trace-Id header
+  * Application LB only
+4. CloudTrail (audit API calls)
+  * any change to the LB environment (provision an LB, delete LB, update health checks, etc)
+  * auditing (not metrics)
+
+## Monitoring ElastiCache
+*caching popular DB queries via Memcached or Redis*
+
+[Monitoring Use with CloudWatch Metrics](https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/CacheMetrics.html)
+
+Types:
+1. CPU utilization
+  * Memcached: multi-threaded; if load exceeds 90% add more nodes to cluster
+  * Redis: single-threaded; take 90 divided by number of cores
+2. Swap usage 
+  * disk space reserved for when out of RAM
+  * Memcached: 
+    * should be 0, no more than 50MB
+    * if over 50MB, increase ['memcached_connections_overhead'](https://docs.aws.amazon.com/AmazonElastiCache/latest/mem-ug/ParameterGroups.ListingGroups.html)
+    * Redis: has no SwapUsage metric, use 'reserved-memory'
+3. Evictions
+  * Let's you know when new is added, and old is booted
+  * Memcached: scale up by increasing memory size or scale out by adding nodes
+  * Redis: can only scale out by adding read replicas
+4. Concurrent connections
+  * set alarm based on number of connections.  This would suggest a spike in traffic or application is not releasing connections like it should be.
+
+## CloudWatch Custom Dashboards
+*Create custom line, bar graphs on all metrics*
+* Don't forget to hit **save** after your done creating... Ouch
+* Creating a dashboard will show in all regions
+
+## Creating a Billing Alarm
+*go to 'My Billing Dashboard' as root to turn on feature for AWS account*
+* send to you as email
+* save to S3
+* CloudWatch => Alarms => Billing
+
+## AWS Organizations
+*manage multiple AWS account by creating groups and applying policies to the groups*
+
+1. centrally manage policies about multiple accounts
+2. control access to AWS services (E.g.: deny/allow access to Kinesis to HR)
+3. Automate account creation and management
+4. consolidate billing across multiple accounts (helps for volume discounting)
+
+## AWS Resource Groups & Tagging
+
 
 
 
