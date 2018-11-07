@@ -1,7 +1,9 @@
 # [AWS Certified SysOps Administrator - Associate](https://aws.amazon.com/certification/certified-sysops-admin-associate/)
-*These are my notes*
+These are my notes
 
-# CloudWatch
+# Monitoring and Reporting
+
+**CloudWatch**:
 *monitoring service for all your AWS resources and applications you run.*
 
 ## EC2
@@ -172,6 +174,87 @@ Types:
 4. consolidate billing across multiple accounts (helps for volume discounting)
 
 ## AWS Resource Groups & Tagging
+
+***Tags***: key value pairs attached to AWS resources
+Tags can be inherited.  E.g.: Autoscaling, CloudFormation, EBS
+
+***Resource Groups***: collection of tags
+* region
+* name
+* health check
+1. Classic Resource Groups
+  * Global; I want to see all 'dev' tags
+2. AWS System Manager
+  * Execute automation commands based on match tag query
+
+
+
+## EC2 Pricing Models
+
+1. On demand: pay as you use, no commitment
+2. Reserved: pay upfront to save long term
+  - Standard
+  - Convertible: change attributes; same or better
+  - Scheduled: at end of month get more instances
+3. Spot: auction house
+4. Dedicated host: no multi-tenant
+  - can be on demand or reserved
+  - good for server-bound software licenses
+
+## AWS Config  
+*fully managed service that provides AWS resource inventory,config history, config change notification to enable security and governance*
+
+[AWS FAQ](https://aws.amazon.com/config/faq/)
+
+Think auditing to appease compliance people 
+
+#### Vocab:
+* Config **item**: point-in-time attribute of a resource
+* Config **snapshot**: collection of config items
+* Config **stream**: stream of changed config items
+* Config **history**: collection of config items for a resource over time
+* Config **recorder**: records and stores config items
+
+#### Setup:
+* logs config for account by individual *region*
+* stored in S3
+* notify via SNS
+
+**Stuff we see**: resource type, resource id, compliance, timeline (config details, relationships, changes, CloudTrail events)
+
+#### Compliance checks:
+* Triggered by: periodic or a configuration change
+* Managed rules: about 40 rules to pick from 
+
+### Lab: (management tools)
+
+1. turn it on for region
+2. determine which resources to monitor
+3. choose bucket to dump to
+4. opt: create SNS
+5. assign IAM role (needs read only to the resource, write to S3, public to SNS)
+6. pick rules (out of 30ish)
+  * 'restricted-ssh' for example
+
+It shows a __timeline__ for when things are changed.  In our example, Config reported I have security groups that are not compliant with the 'restricted-ssh' rule.  I change the security groups to be compliant.  The history of the security group is tracked.
+
+
+## Comparing Resources
+
+| CloudWatch | CloudTrail | Config     |
+|------------|------------|------------|
+| monitor performance | monitor API calls | state of AWS env |
+| CPU utilization| who provisioned security groups | rules of security groups 3 weeks ago |
+
+
+## Dashboards
+1. Service: status of each AWS service by region
+2. Personal: alerts to my AWS experience.  If I had an EC2 in US-EAST-1 and that region was down.  I get a personal alert
+
+
+
+
+
 
 
 
