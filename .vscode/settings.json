@@ -6,6 +6,7 @@
         "bootable",
         "chkconfig",
         "httpd",
-        "pems"
+        "pems",
+        "rolefor"
     ]
 }
