@@ -13,6 +13,7 @@ EC2 default monitoring:
 2. Network
 3. Disk (I/O, not capacity details)
 4. Status Check (health of VM)
+
 Tip: RAM util is custom.  EC2 monitoring is 5min by default.  Can make 1min
 
 Metrics are stored indefinitely.  Terminated EC2 or ELB can still be retrieved.
@@ -330,11 +331,38 @@ IP address: Application LB have changing IP addresses as they are brought into s
   * **SurgeQueueLength**: classic LB; number of pending requests (size 1024)
   * **SpilloverCount**: classic LB; if queue is full, this is count of dropped
 
+## Lab: ELB & CW
+1. Provision EC2 with Apache webpage
+2. Create Application LB
+  * put into same Security Group as EC2 (ssh,http)
+  * create new target group
+  * point/register targets to point to our newly created target group
+3. Use the DNS of the LB and access EC2
+4. Check the CloudWatch metrics to see the detail
+
+# Systems Manager (SSM)
+*management tool which gives you visibility and control over AWS infrastructure.*
+
+Works with CloudWatch and includes **Run Command**, which automates operational tasks (security, package installs, etc)
+
+Allows you to organize your inventory by grouping resources (by application, environment, team, etc).  Can also manage on premise.
+
+### Run Command
+
+1. make IAM for Run Command: "AmazonEC2RoleforSSM"
+2. Assign role to EC2 and maybe add a tag to help us find it
+3. Go to AWS System Manager
+  * Find resource(s)
+  * Save the query as a group
+
+Think of Run Command as a portal to show info about your groups.  The portal leads to:
+* Config: audit resource setup
+* CloudTrail
+* Personal Health: operational notices about the regions I have resources
+* Trusted Advisor: requires non-free account =(
 
 
-
-
-
+stopped at 8:15
 
 
 
