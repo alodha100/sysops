@@ -252,6 +252,9 @@ Think auditing to appease **compliance** people.
 * automated compliance checking 
 * per region only.  So if you want Global compliance, you would have to go into each regions =(
 * you can create your own config rules, or use the AWS managed ones
+* what triggers AWS Config:
+  * periodically: run every 2 weeks
+  * configuration changes: somebody opened port 80 on EC2
 
 
 #### Vocab:
@@ -294,10 +297,10 @@ It shows a __timeline__ for when things are changed.  In our example, Config rep
 
 ## Comparing Resources
 
-| CloudWatch | CloudTrail | Config     |
-|------------|------------|------------|
-| monitor performance | monitor API calls | state of AWS env |
-| CPU utilization| who provisioned security groups | rules of security groups 3 weeks ago |
+| CloudWatch | CloudTrail | Config     | Access Logs|
+|------------|------------|------------|------------|
+| monitor performance | monitor API calls | state of AWS env | turn on for EC2 |
+| CPU utilization| who provisioned security groups | rules of security groups 3 weeks ago | fleet of EC2 autoscaling, recover 500 errors days after instance termination |
 
 
 ## Dashboards
@@ -306,18 +309,16 @@ It shows a __timeline__ for when things are changed.  In our example, Config rep
 
 
 
-
-
-
-
-
 # Section 3: Deployment & Provisioning
 Things I was iffy on for EC2:
-* Placement group: spread or cluster, put instances in same AZ for less latency.  
+* Placement group: put instances in same AZ for less latency.  
+  * Spread
+  * Cluster
 * T2/T3 Unlimited: burst CPU (I think you use credits)
 
 Let's fire up an Apache Website
 ```
+#!/bin/bash
 yum update -y
 yum install httpd -y
 service httpd start
@@ -325,32 +326,42 @@ chkconfig httpd on
 echo "<html><body><center><h1>Hello Apache</h1></center></body></html>" > /var/www/html/index.html
 ```
 
-### Troubleshooting: 
-**InstanceLimitExceed** error: too many instances in that region (20 default).  
-Solve: You need to request more.
+## Troubleshooting: 
+Why didn't my EC2 launch???
 
-**InsufficientInstanceCapacity** error: AWS is out of that hardware instance type.  
+1. **InstanceLimitExceed** error: too many instances in that region (20 default).  
+Solve: You need to request more.
+2. **InsufficientInstanceCapacity** error: AWS is out of that hardware instance type.  
 Solve: Wait for more; request less instances; try different instance type; request in different AZ.
 
 ## EBS IOPS
-* io1 goes 10k up to 32k IOPS
-* NoSQL or relational DB with latency sensitive workloads
+* gp2 (general purpose) 3 IOPS/GB; up to 16,000 IOPS
+* io1 (provisioned IOPS) 50 IOPS/GB; up to 64,000 IOPS
+  * NoSQL or relational DB with latency sensitive workloads
 
-what happens if you max your IOPS on a gp2?
-* I/O requests start queueing
-* you get thrashed
+#### What happens if you max your IOPS?
+* on gp2
+  * I/O requests start queueing
+  * your disk will start to thrash
+* gp2 fixes
+  * increase disk size (size and IOPS are directly proportional), but capped at 5.2TB
+  * increase EBS class to io1
 
-solutions:
-* increase your volume size, because volume size and IOPS are directly proportional up to 3,333GB.  3 IOPS per GB
-* upgrade storage class from gp2 to io1
 
 ## Bastion Host 
 Host located in your public subnet with a route to the internet via gateway.  Use this subnet to jump to your private subnet via ssh or rdp.  Make sure to lock down your bastion host (restrict IP and ports)
 
-## ELB
-You can pre-warm your ELBs by contacting AWS if you expect a massive surge in traffic to ensure your ELB can handle the traffic.
+## ELB - Elastic Load Balancer
+Equal distribution of work load across resources
 
-IP address: Application LB have changing IP addresses as they are brought into service.  Network LB get **static IP** address (one per subnet).  This makes firewall rules are a breeze.  You can put a ALB behind a NLB to get the best of both worlds.  Exam tip: if it needs static, you need need Network LB.
+1. Application LB - layer 7; inspect packets of HTTP header
+2. Network LB - layer 4; transport layer, TCP, super fast, super $$$
+3. Class LB - layer 4 & 7; but features for layer 7 are weak sauce `X-Forwarded` and `sticky sessions`
+
+You can `pre-warm` your ELBs by contacting AWS if you expect a massive surge in traffic to ensure your ELB can handle the traffic.  You have to contact AWS support to do this.
+
+**IP address**: Application LB have changing IP addresses as they are brought into service.  Network LB get **static IP** address (one per subnet).  This makes firewall rules are a breeze.  You can put a ALB behind a NLB to get the best of both worlds.  
+**Exam tip**: if it needs static, you need need Network LB.
 
 ### ELB Error Messages:
 * **4xx** client side error; think 404 for bad URL (client mistake)
@@ -359,7 +370,7 @@ IP address: Application LB have changing IP addresses as they are brought into s
   * **401**: unauthorized - user access denied
   * **403**: forbidden - request block by firewall ACL
   * **460**: client closed connection - LB didn't have time to respond and client timed out the server
-  * **463**: LB received an X-Forward-For request header that was rubbish
+  * **463**: LB received an `X-Forward-For` request header that was more than 30 IP addresses
 
 * **5xx** server side error; think 500 the 5 is an "S" for server side
 
@@ -367,37 +378,61 @@ IP address: Application LB have changing IP addresses as they are brought into s
   * **502** bad gateway: app server closed connection or bad response
   * **503** Unavailable - no registered target
   * **504** Gateway timeout - application is not responding
-  * **561** Unauthorized - check IAM
+  * **561** Unauthorized - ID provider error when trying to authenticate the user
 
 
-### CloudWatch for ELB
+## CloudWatch for ELB
+By default, your ELB will report to CloudWatch
 
 * CW can monitor the ELB and its backend instance
 * Default for ELB is 60sec
 
 1. Overall Health:
-  * **BackendConnectionErrors**: number of unsuccessful connections to the backend instance
-  * **HealthHostCount**: count of healthy instances registered
-  * **UnHealthyCount**
-  * **HTTPCode_Backend_2XX-5XX**: all of our HTTP return codes
+    * **BackendConnectionErrors**: number of unsuccessful connections to the backend instance
+    * **HealthHostCount**: count of healthy instances registered
+    * **UnHealthyCount**
+    * **HTTPCode_Backend_2XX-5XX**: all of our HTTP return codes
   
-  2. Performance
-  * **Latency**
-  * **RequestCount**: number of completed requests / connections
-  * **SurgeQueueLength**: classic LB; number of pending requests (size 1024)
-  * **SpilloverCount**: classic LB; if queue is full, this is count of dropped
+2. Performance:
+    * **RequestCount**: number of completed requests / connections
+    * **SurgeQueueLength**: classic LB; number of pending requests (queue size max 1024)
+    * **SpilloverCount**: classic LB; if queue is full, this is count of dropped
 
 ## Lab: ELB & CW
 1. Provision EC2 with Apache webpage
+    * make sure ssh & http are enabled in security group
 2. Create Application LB
-  * put into same Security Group as EC2 (ssh,http)
-  * create new target group
-  * point/register targets to point to our newly created target group
-3. Use the DNS of the LB and access EC2
+    * put into same Security Group as EC2 (ssh,http)
+    * create new target group
+    * point/register targets to point to our newly created target group
+3. Use the DNS of the LB and access EC2 (will be an A record)
 4. Check the CloudWatch metrics to see the detail
 
-# Systems Manager (SSM)
-*management tool which gives you visibility and control over AWS infrastructure.*
+
+
+
+
+
+
+
+
+stopped here!  Almost done with review.
+
+start with section 26
+
+
+
+
+
+
+
+
+
+
+
+
+## AWS Systems Manager (SSM)
+Management tool which gives you visibility and control over AWS infrastructure.
 
 Works with CloudWatch and includes **Run Command**, which automates operational tasks (security, package installs, etc)
 
@@ -416,15 +451,6 @@ Think of Run Command as a portal to show info about your groups.  The portal lea
 * CloudTrail
 * Personal Health: operational notices about the regions I have resources
 * Trusted Advisor: requires non-free account =(
-
-
-stopped at 8:15
-
-
-
-
-
-
 
 
 
