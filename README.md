@@ -1,31 +1,30 @@
 # [AWS Certified SysOps Administrator - Associate](https://aws.amazon.com/certification/certified-sysops-admin-associate/)
-These are my notes
+These are my notes from the [acloudguru](https://acloud.guru) training on [udemy](https://www.udemy.com/aws-certified-sysops-administrator-associate/)
 
 # Monitoring and Reporting
 
-**CloudWatch**:
-*monitoring service for all your AWS resources and applications you run.*
+**CloudWatch**: monitoring service for all your AWS resources and applications you run.
 
 ## EC2
 
 EC2 default monitoring:
 1. CPU
 2. Network
-3. Disk (I/O, not capacity details)
-4. Status Check (health of VM)
+3. Disk (I/O only; not capacity details)
+4. Status Check (health of VM aka host)
 
 Tip: RAM util is custom.  EC2 monitoring is 5min by default.  Can make 1min
 
-Metrics are stored indefinitely.  Terminated EC2 or ELB can still be retrieved.
+Metrics are stored indefinitely by default.  Terminated EC2 or ELB instance metrics can still be retrieved!  You can retrieve your metrics with `GetMetricStatics` API or 3rd party tools from AWS partners
 
-Defaults: depends on service, some are 1, 3 or 5.  Custom metrics minimum is 1min.
+Defaults: depends on service, some are 1, 3 or 5.  Custom metrics minimum is 1 min.
 
-CloudWatch Alarms can monitor **any** metric.  They can then trigger an action to be taken:
+**CloudWatch Alarms** can monitor any metric.  E.g.: CPU utilization on EC2, billing alert, etc.  They can then trigger an actions to be taken:
 1. send SNS
 2. run a lambda to smoke your infrastructure
 3. whatever!
 
-Tip: CloudWatch can be used to monitor on premise resources by installing the SSM agent can CloudWatch agent
+Tip: CloudWatch can be used to monitor on premise resources by installing the **SSM agent** can CloudWatch agent
 
 ## Monitor EC2 with Custom Metrics
 Goal: have an EC2 instance send custom metrics to CloudWatch
@@ -50,13 +49,6 @@ nano /etc/crontab
 These metrics are found in:
 CloudWatch => Browser Metrics (button) => All Metrics (tab) => Custom
 
-
-Copy/Paste helper:
-```
-#>> chmod 400 ~/pems/SysopsKp.pem
-#>> ssh ec2-user@54.210.165.248 -i ~/pems/SysopsKp.pem
-```
-
 ## Monitoring EBS
 EBS types:
 1. General Purpose (SSD) - **gp2**
@@ -71,22 +63,23 @@ EBS types:
   * streaming workloads for cheap
   * Big Data warehouse
 4. Cold (HDD non-bootable) - **sc1**
-  * infrequent access, large volume data
+  * infrequent access, large volume data; File Servers
   * balling on a budget
 
 
-GP2 (general purpose) Maths:
-* IOPS proportionally scales up with volume size
+### GP2 (general purpose) - IOPS proportionally scales up with volume size.  IOPS range 3,000 - 9,999
+
+#### Maths:
 * have a base 3 IOPS per GB
 * max volume 16.3 GB size
-* 10k max IOPS
-* can burst up to 3,000 IOPS - *Can use credits*
+* 10k max IOPS, then you move into io1 tier
+* can burst up to 3,000 IOPS by using *credits*
 
-Have 1 GB drive, we get 3 IOPS - *Could burst to 3000 IOPS by using 2997 credits*
-Have 100 GB drive, we get 300 IOPS - *Could burst to 3000 IOPS by using 2700 credits*
-Have 500 GB drive, we get 1,500 IOPS - *Could burst to 3000 IOPS by using 1500 credits*
+  * Have 1 GB drive, we get 3 IOPS - *Could burst to 3000 IOPS by using 2997 credits*
+  * Have 100 GB drive, we get 300 IOPS - *Could burst to 3000 IOPS by using 2700 credits*
+  * Have 500 GB drive, we get 1,500 IOPS - *Could burst to 3000 IOPS by using 1500 credits*
 
-Credits:
+#### Credits:
 * Each volume gets 5.4M
 * This will sustain 30min of max (3k IOPS)
 * Credits are earned when not going over provisioned level
@@ -97,17 +90,22 @@ Credits:
 * If we take a snapshot from S3, expect a performance hit, because blocks are not read.
 * In production, we can read all the blocks on our volume before using it.  This is called **initialization**, and will prevent the performance hit.
 
-### EBS CloudWatch Metrics
-* **VolumeReadOps** - total number of reads for a period
-* **VolumeWriteOps** - total number of writes for a period
-* **VolumeQueueLength** - number of read and write operations waiting
+## EBS CloudWatch Metrics
+* **VolumeReadOps** - total number of reads for a period (good for calculating IOPS)
+* **VolumeWriteOps** - total number of writes for a period (good for calculating IOPS)
+* **VolumeQueueLength** - number of read and write operations waiting. (are the IOPS being maxed out?  Want value of zero)
 * [Monitoring the Status of Your Volumes](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-volume-status.html)
 * volume status checks: 
   * OK - normal
   * Warning - degraded, severely degraded
   * Impaired - stalled, not available
+* IOPS maths for CW: 1000 every 1 minute => 1000/60 IOPS
 
-You can now modify (capacity, type) EBS volumes on the fly (no longer have to stop)  
+You can now modify (capacity, type, IOPS performance, etc) EBS volumes **on the fly**!!! No longer have to stop EC2 to make changes.  How do we do this:
+1. issue modification command (console or command line)
+2. Monitor the progress of request; wait for it to complete
+3. If you increased the size, you have to tell the OS to extend the volume's file system
+
 
 ## Monitoring ELB
 
@@ -132,6 +130,10 @@ Ways to monitor:
 4. CloudTrail (audit API calls)
   * any change to the LB environment (provision an LB, delete LB, update health checks, etc)
   * auditing (not metrics)
+
+#### CloudWatch vs. CloudTrail
+* CW: performance
+* CT: api calls within aws platform (Auditing E.g.: make new EC2, new user, etc)
 
 ## Monitoring ElastiCache
 *caching popular DB queries via Memcached or Redis*
