@@ -1,7 +1,7 @@
 # [AWS Certified SysOps Administrator - Associate](https://aws.amazon.com/certification/certified-sysops-admin-associate/)
 These are my notes from the [acloudguru](https://acloud.guru) training on [udemy](https://www.udemy.com/aws-certified-sysops-administrator-associate/)
 
-# Monitoring and Reporting
+# Section 2: Monitoring and Reporting
 
 **CloudWatch**: monitoring service for all your AWS resources and applications you run.
 
@@ -35,19 +35,7 @@ Goal: have an EC2 instance send custom metrics to CloudWatch
 3. Log in to EC2
   * don't forget to chmod 400 your pem  
 
-
-*Scripts for CloudWatch*
-```
-# verify this script works
-/home/ec2-user/aws-scripts-mon/mon-put-instance-data.pl --mem-util --verify --verbose
-# actually send data (one data point for each metric)
-/home/ec2-user/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail
-# send metrics every minute 
-nano /etc/crontab
-*/1 * * * * root /home/ec2-user/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail
-```
-These metrics are found in:
-CloudWatch => Browser Metrics (button) => All Metrics (tab) => Custom
+These metrics are found in: `CloudWatch => Browser Metrics (button) => All Metrics (tab) => Custom`
 
 ## Monitoring EBS
 EBS types:
@@ -108,13 +96,32 @@ You can now modify (capacity, type, IOPS performance, etc) EBS volumes **on the 
 
 
 ## Monitoring ELB
+CloudWatch is auto turned on when you create an ELB.  No need to set IAM permissions or the like, it just happens
 
 Types: 
 1. Application: layer 7
 2. Network: layer 4 transport (high throughput, TCP)
 3. Classic (elastic)
 
-Ways to monitor:
+#### Access logs:
+* turned off by default
+* stored in s3 bucket (compressed)
+* details
+  * timestamp
+  * client IP
+  * latencies
+  * request path
+  * server response
+* Use Athena or 3rd party
+* **Access logs store data where EC2 instances have been deleted**
+  * E.g.: you have a fleet of auto scaling EC2 instances.  Days after the event, you want to go back and trouble shoot 500 errors.  The Access Logs should have a record of this in S3.
+
+#### Request Tracing
+* trace the request from client to it's target.
+* load balancer adds or updates the `X-Amzn-Trace-Id` header before forwarding
+* **Application** load balancer only
+
+#### Four Ways to monitor:
 1. CloudWatch (monitor performance)
   * when you spin up ELB, you default get CloudWatch.  No IAM required
 2. Access logs
@@ -136,90 +143,130 @@ Ways to monitor:
 * CT: api calls within aws platform (Auditing E.g.: make new EC2, new user, etc)
 
 ## Monitoring ElastiCache
-*caching popular DB queries via Memcached or Redis*
+Caching popular DB queries via Memcached or Redis
 
 [Monitoring Use with CloudWatch Metrics](https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/CacheMetrics.html)
 
 Types:
 1. CPU utilization
-  * Memcached: multi-threaded; if load exceeds 90% add more nodes to cluster
+  * Memcached: multi-threaded; if load exceeds 90% you have to add more nodes to your cluster
   * Redis: single-threaded; take 90 divided by number of cores
-2. Swap usage 
+    * E.g.: `cache.m1.xlarge.node` has four cores.  The CPU utilization threshold would be 22.5% (90% / 4 cores)
+2. Swap usage: the amount of the swap file used, duh
   * disk space reserved for when out of RAM
+    * size of disk space should be the same as RAM size
   * Memcached: 
-    * should be 0, no more than 50MB
-    * if over 50MB, increase ['memcached_connections_overhead'](https://docs.aws.amazon.com/AmazonElastiCache/latest/mem-ug/ParameterGroups.ListingGroups.html)
-    * Redis: has no SwapUsage metric, use 'reserved-memory'
+    * should be 0, no more than 50Mb
+    * if over 50Mb, increase ['memcached_connections_overhead'](https://docs.aws.amazon.com/AmazonElastiCache/latest/mem-ug/ParameterGroups.ListingGroups.html)
+    * Redis: has no SwapUsage metric, use `reserved-memory`
 3. Evictions
-  * Let's you know when new is added, and old is booted
-  * Memcached: scale up by increasing memory size or scale out by adding nodes
-  * Redis: can only scale out by adding read replicas
+  * Let's you know when new cache item is added and old one is booted
+  * Memcached: 
+    * scale up by increasing memory size 
+    * scale out by adding nodes
+  * Redis: can only scale **out** by adding read replicas
 4. Concurrent connections
   * set alarm based on number of connections.  This would suggest a spike in traffic or application is not releasing connections like it should be.
+  * **Exam Tip**: remember to set an alarm on the number of concurrent connections for elasticache.
+
+[Monitoring Elasticache](https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/CacheMetrics.html) by AWS
 
 ## CloudWatch Custom Dashboards
-*Create custom line, bar graphs on all metrics*
+Create custom line, bar graphs, numbers, query, etc on all metrics
+
 * Don't forget to hit **save** after your done creating... Ouch
-* Creating a dashboard will show in all regions
+* Dashboards show across **all** regions.
+  * you will only see items (EC2, DynamoDB, etc) for the region you are in
 
 ## Creating a Billing Alarm
-*go to 'My Billing Dashboard' as root to turn on feature for AWS account*
+Go to `My Billing Dashboard` as root to turn on feature for AWS account
+
 * send to you as email
 * save to S3
 * CloudWatch => Alarms => Billing
 
 ## AWS Organizations
-*manage multiple AWS account by creating groups and applying policies to the groups*
+Manage multiple AWS accounts by creating groups and applying policies to the groups
 
-1. centrally manage policies about multiple accounts
-2. control access to AWS services (E.g.: deny/allow access to Kinesis to HR)
-3. Automate account creation and management
-4. consolidate billing across multiple accounts (helps for volume discounting)
+1. Centrally manage multiple AWS accounts.  Create groups of accounts, then attach policies to them.  E.g.: create a Developers group, and then individual teams with Dev group.
+2. Control access to AWS services (E.g.: deny/allow access to Kinesis to HR)
+    * these **Service Control Policies (SCP)** will trump IAM policies
+3. Automate account creation and management.  Great for when adding new staff.  New hire gets all the permissions/policies of their group.
+4. Consolidate billing across multiple accounts (helps for volume discounting)
+
+* add other AWS accounts to the root organization AWS account
+* create policy across all accounts
+  * create a deny/allow Kenesis policy
+  * enable the policy on the root account
+  * apply the new policy to the organizations you want
+
 
 ## AWS Resource Groups & Tagging
 
-***Tags***: key value pairs attached to AWS resources
-Tags can be inherited.  E.g.: Autoscaling, CloudFormation, EBS
+#### Tags: 
+* key value pairs attached to AWS resources
+  * Name
+  * Value
+* Tags can be inherited.  E.g.: Autoscaling, CloudFormation, EBS
 
-***Resource Groups***: collection of tags
+#### Resource Groups: collection of tags
 * region
 * name
 * health check
-1. Classic Resource Groups
-  * Global; I want to see all 'dev' tags
-2. AWS System Manager
-  * Execute automation commands based on match tag query
 
+#### Types of Resource groups:
+1. Classic Resource Groups
+    * Global; I want to see all `dev` tags
+    * Appears to no longer be available
+2. AWS System Manager
+    * Execute automation commands based on match tag 
+    * per region
+    * think `running queries` for tags
+    * once group is created, can use `Insights`
+      * compliance
+      * inventory
+    * can run automation on the group
+      * create an image
+      * create snapshot
 
 
 ## EC2 Pricing Models
-
 1. On demand: pay as you use, no commitment
-2. Reserved: pay upfront to save long term
-  - Standard
-  - Convertible: change attributes; same or better
-  - Scheduled: at end of month get more instances
+2. Reserved: pay upfront to save long term (1 or 3 year)
+    - Standard
+    - Convertible: change attributes; same or better
+    - Scheduled: at end of month get more instances
 3. Spot: auction house
-4. Dedicated host: no multi-tenant
-  - can be on demand or reserved
-  - good for server-bound software licenses
+4. Dedicated host: not multi-tenant
+    - can be on demand or reserved
+    - good for server-bound software licenses
 
 ## AWS Config  
-*fully managed service that provides AWS resource inventory,config history, config change notification to enable security and governance*
+fully managed service that provides AWS resource inventory,config history, config change notification to enable security and governance
 
 [AWS FAQ](https://aws.amazon.com/config/faq/)
 
-Think auditing to appease compliance people 
+Think auditing to appease **compliance** people.
+
+* configuration snapshots and logs config changes of AWS resources
+* automated compliance checking 
+* per region only.  So if you want Global compliance, you would have to go into each regions =(
+* you can create your own config rules, or use the AWS managed ones
+
 
 #### Vocab:
 * Config **item**: point-in-time attribute of a resource
+  * My WebDmzSecGrp has port 22 open to the world
 * Config **snapshot**: collection of config items
+  * Every 1, 3, etc hours what are the states of my items
 * Config **stream**: stream of changed config items
+  * All of the changed items are reported to the stream
 * Config **history**: collection of config items for a resource over time
+  * I want to go back 2 weeks ago and see how a resource was configured
 * Config **recorder**: records and stores config items
 
 #### Setup:
-* logs config for account by individual *region*
+* logs config for account by **individual region** (not global)
 * stored in S3
 * notify via SNS
 
@@ -229,15 +276,18 @@ Think auditing to appease compliance people
 * Triggered by: periodic or a configuration change
 * Managed rules: about 40 rules to pick from 
 
-### Lab: (management tools)
+#### Lab: (management tools)
 
+For example, let's say we do not want resources which allow ssh.  There is an AWS managed Config Rule for this.  Create the rule and it will show you any resources (E.g.: EC2) which are non-compliant.  Config might state something like `you have a security group with ssh port 22 turned on and 4 EC2 instances with this security group`.  You can go in and change the security group.  The output from the Config audit is shown in a pretty timeline.  That way we can say `on Sept 22, 2018 all of our ssh was disabled`
+
+How do we do this:
 1. turn it on for region
 2. determine which resources to monitor
 3. choose bucket to dump to
 4. opt: create SNS
 5. assign IAM role (needs read only to the resource, write to S3, public to SNS)
 6. pick rules (out of 30ish)
-  * 'restricted-ssh' for example
+  * `restricted-ssh` for example
 
 It shows a __timeline__ for when things are changed.  In our example, Config reported I have security groups that are not compliant with the 'restricted-ssh' rule.  I change the security groups to be compliant.  The history of the security group is tracked.
 
@@ -251,13 +301,17 @@ It shows a __timeline__ for when things are changed.  In our example, Config rep
 
 
 ## Dashboards
-1. Service: status of each AWS service by region
+1. Service: [status of each AWS service by region](https://status.aws.amazon.com/)
 2. Personal: alerts to my AWS experience.  If I had an EC2 in US-EAST-1 and that region was down.  I get a personal alert
 
 
 
 
-# Deployment & Provisioning
+
+
+
+
+# Section 3: Deployment & Provisioning
 Things I was iffy on for EC2:
 * Placement group: spread or cluster, put instances in same AZ for less latency.  
 * T2/T3 Unlimited: burst CPU (I think you use credits)
