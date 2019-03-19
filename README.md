@@ -408,51 +408,55 @@ By default, your ELB will report to CloudWatch
 3. Use the DNS of the LB and access EC2 (will be an A record)
 4. Check the CloudWatch metrics to see the detail
 
-
-
-
-
-
-
-
-
-stopped here!  Almost done with review.
-
-start with section 26
-
-
-
-
-
-
-
-
-
-
-
-
 ## AWS Systems Manager (SSM)
-Management tool which gives you visibility and control over AWS infrastructure.
 
-Works with CloudWatch and includes **Run Command**, which automates operational tasks (security, package installs, etc)
+* Management tool which gives you visibility and control over AWS infrastructure (including on-prem)
+* Works with CloudWatch and includes **Run Command**, which automates operational tasks (security, package installs, etc)
+* Allows you to organize your inventory by grouping resources (by application, environment, team, etc).  Can also manage on premise.
 
-Allows you to organize your inventory by grouping resources (by application, environment, team, etc).  Can also manage on premise.
-
-### Run Command
-
-1. make IAM for Run Command: "AmazonEC2RoleforSSM"
+How to:
+1. make IAM role for Run Command with the policy `AmazonEC2RoleforSSM`
 2. Assign role to EC2 and maybe add a tag to help us find it
-3. Go to AWS System Manager
-  * Find resource(s)
+3. Go to AWS System Manager (think of this as a portal to other AWS services)
+  * Find resource(s) by running a query (can use tags to search with)
   * Save the query as a group
 
-Think of Run Command as a portal to show info about your groups.  The portal leads to:
-* Config: audit resource setup
-* CloudTrail
-* Personal Health: operational notices about the regions I have resources
-* Trusted Advisor: requires non-free account =(
+### Insights
+1. Config: audit resource setup
+2. CloudTrail
+3. Personal Health: operational notices about the regions I have resources
+4. Trusted Advisor: makes suggestions for compliance such as S3 permissions, EC2 access, security group open ports, etc
+  * cost optimize (not free account)
+  * performance (not free account)
+  * security
+  * fault tolerance (not free account)
+  * service limits (too many EC2 instances)
+5. Inventory  
+6. Compliance
+
+### Actions
+1. Automation: use pre-define AWS managed commnands E.g.: Copy Snapshot, Attach EBS, Stop instance
+2. Run command: do stuff to EC2 instances E.g.: Ansible playbook, configure Docker, make your own script, `AWS-RunShellScript`
+3. Patch Manager
+4. Maintenance Windows: run jobs every X minutes, hours, days, etc
+5. State Manager: make sure instances are all in same state.  If someone changes instance state, this will change is back.
+
+### Shared Resources
+1. List of all instances
+2. Activation: manage AWS and on prem systems 
+3. Documents: all the commands we can run with Run Command
+4. Parameter Store: store secrets, DB strings, etc.  They can be encrypted
+
+
+
+# Section 4: High Availability
+
+## Elasticity & Scalability 101
+
+* **Elasticity**: env can stretch back and forth based on need (short term). Pay for what you need.  E.g.: auto-scaling, EC2 on demand instances, etc 
+* **Scalability**: building out the infrastructure for long term demands.
 
 
 
 
-
+  `
