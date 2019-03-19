@@ -453,10 +453,70 @@ How to:
 
 ## Elasticity & Scalability 101
 
-* **Elasticity**: env can stretch back and forth based on need (short term). Pay for what you need.  E.g.: auto-scaling, EC2 on demand instances, etc 
+* **Elasticity**: env can stretch back and forth based on need (short term). Pay for what you need.  
 * **Scalability**: building out the infrastructure for long term demands.
 
+### EC2
+* **Elasticity**: increase the number of instances; use autoscaling
+* **Scalability**: increase Instance size, use reserve instances
+
+### DynamoDB
+* **Elasticity**: increase IOPS for traffice spikes, decrease after
+* **Scalability**: infinite size of storage
+
+### RDS
+* **Elasticity**: not very elastic (mySQL, etc)
+* **Scalability**: increase size; small => medium (downtime)
+
+### Aurora
+* **Elasticity**:  solves RDS non scale limitation!  Use Aurora serverless.
+* **Scalability**: increase size; small => medium (no downtime!)
 
 
+## RDS: Multi-AZ Failover
+Keeps a copy of your Prod DB in a different AZ in case of failure or disaster.  Feature must be turned on for your DB.  AWS manages the syncing to the backup DB.  If a failure occurs, AWS will update the DNS records.  Your connection strings do not change.  Endpoint remains the same.  E.g.: 
 
-  `
+`[myname].[randomstring].[region].rds.amazonaws.com`
+`benwright.lkq09fsm3l12.us-east-1.rds.amazonaws.com`
+
+This is for DR (disaster recovery), not performance.
+* Highly available
+* backups are taken from secondary, no performance hit to I/O on primary
+* restores are taken from secondary, no performance hit to I/O on primary
+* can force a failover by rebooting primary
+
+## RDS: Using Read Replicas
+Read only copy of your DB for read heavy workloads
+* performance
+* can have multiple RR; even chain them (expect latency)
+* if your primary needs to be taken down (maintenance) send all traffic to RR
+* data warehousing against RR so primary doesn't take a read hit
+
+Creating:
+* AWS will take a snapshot of primary
+  * if not multi-AZ, expect a ~1 min I/O suspension
+  * if multi-AZ, snapshot of backup is taken, performance hit
+* You get a new endpoint for the RR (can point traffic directly to it)  
+
+Exam tips:
+1. You can promote a RR to primary, but this will break the RR 
+2. MySQL, PostgreSQL, MariaDB can have up to 5 RR's
+3. RR's can be in different regions
+4. Replication is always async
+5. cannot snapshot or auto backup RR.  Have to do those on primary
+6. look out for the `REPLICA LAG` monitorable item
+7. __Know the difference between RR & Multi-AZ__
+
+## RDS: lab
+
+Cools things we can do after spinning up a [mySQL] DB
+1. make it multi-az (little performance hit when you change this)
+2. change to io1 (high IOPS)
+3. change disk size
+4. create a read replica (after BACKUPS are turned ON)
+    * turning on backups will reboot the primary
+    * nice to put a DB instance ID on the RR to reference it later
+    * can promote the RR (this breaks the replication chain)
+    * can chain another RR to the RR (after turning on backups for RR)
+    * force a failover (reboot the primary)
+
