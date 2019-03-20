@@ -507,7 +507,7 @@ Exam tips:
 6. look out for the `REPLICA LAG` monitorable item
 7. __Know the difference between RR & Multi-AZ__
 
-## RDS: lab
+## RDS: Lab
 
 Cools things we can do after spinning up a [mySQL] DB
 1. make it multi-az (little performance hit when you change this)
@@ -519,4 +519,100 @@ Cools things we can do after spinning up a [mySQL] DB
     * can promote the RR (this breaks the replication chain)
     * can chain another RR to the RR (after turning on backups for RR)
     * force a failover (reboot the primary)
+5. find the RDS version `aws rds describe-db-instances --region us-east-1`
+
+## Elasticache
+Cache most frequent DB searches or recommend engine.  Good choice if your DB is read heavy of same queries.
+#### Memcached
+Object caching.  Simple.  __No Multi-AZ__
+#### Redis 
+Key value pairs that supports data structures like sets and lists.  Supports Master / Slave replication and Multi-AZ
+
+## Aurora
+Amazon's RDS.  MySQL & PostgreSQL compatible. Stores 6 copies of data across 3 AZ's! It would take a loss to 2 copies to affect write & 3 concurrent failures to affect read availabilty
+* min 10GB up to 64TB autoscaling
+* self healing; data blocks are continuously being scanned
+* you only write to a single primary instance.  That will replicate for you
+* if 100% CPU on Aurora; need to determine if it's read or writes that is maxing you out
+  * if __writes__, you need a bigger single instance to write to (scale up)
+  * if __reads__, you need more read replicas (scale out).  Can go up to 15
+* Aurora servlerless: on demand; autoscaling.  Can migrate between server/serverless as needed.
+* encryption by default; this will force all RR to also be encrypted 
+* backtrack: easy to restore DB to time point up to 72 hours ago
+* you can create a RR if a different region
+  * this will create an entire new cluster however
+
+## Auto Scaling Trouble Shooting
+Instances are not launching into an autoscaling group
+* associated k/p does not exist
+* security group does not exist
+* instance type may not be available in that region
+
+# Section 5: Storage & Data Management
+## S3
+secure, durable, and highly scalable storage for __objects__
+* size: 0B - 5TB
+* unlimited storage capacity
+
+Atonomy:
+* key/value, version, metadata, subresources (ACLs), CORS
+
+Data consistency:
+  * PUTS: read after write
+  * UPDATE & DELETE: eventual
+
+Default
+* 99.99% availability (99.9% guaranteed)
+* 99.99999 99999 9% (11) durable
+
+S3-IA (infrequent access)
+  * retrieval fee
+
+S3-IA One Zone
+  * 20% cost savings
+  * 99.5% available
+
+Reduced Redundancy
+  * 99.99% durable 
+  * 99.99% available
+  * phasing out
+
+Glacier:
+  * 3-5 hours to retrieval
+
+Intelligent Tiering (new) - objects move between frequent & infrequent
+
+## S3 review
+* Versioning: when versioning is turned on; you do not delete files.  Instead, a delete marker is applied.  Can always come back to restore the file
+* MFA delete: requires MFA to (1) delete an object version (2) turn on/off versioning
+
+## S3: Encryption at rest
+Server Side Encryption (SSE)
+* S3 managed keys (SSE-S3)
+  * AWS manages all (encrypt key and rotate key)
+* AWS Key Management Service, managed keys (SSE-KMS)
+  * encrypt key's key (envelope key) gets an audit trail
+  * either you or aws manages envelope key
+* SSE with customer provided keys (SSE-C)
+  * you do it all
+
+Client Side Encryption: you do it before you give it to S3
+
+You can create `bucket policy` which states everything stored in bucket must be encrypted.  When adding a file to the bucket, you must include in the request header as a parameter.  All PUT requests must state which encryption is to be used.
+
+## EC2 Types
+1. Instance store: ephemeral storage.  OG AWS 
+2. EBS: permanently store data
+
+#### Root Volumes
+Size
+1. Instance: 10GB max
+2. EBS: 1TB or 2TB pending on OS
+
+stopped 44 @2:30
+
+
+
+
+
 
