@@ -600,19 +600,88 @@ Client Side Encryption: you do it before you give it to S3
 
 You can create `bucket policy` which states everything stored in bucket must be encrypted.  When adding a file to the bucket, you must include in the request header as a parameter.  All PUT requests must state which encryption is to be used.
 
-## EC2 Types
-1. Instance store: ephemeral storage.  OG AWS 
-2. EBS: permanently store data
 
-#### Root Volumes
-Size
-1. Instance: 10GB max
-2. EBS: 1TB or 2TB pending on OS
+#### Volume Types:
 
-stopped 44 @2:30
-
-
-
+|| Instance   | EBS | 
+|--|------------|------------|
+| persists:| ephemeral, No  |  Yes
+| max size:| 10GB  | 1-2TB (pending OS)  |
+| EC2 root volume on terminate:| gone | default is delete, can change|
+| EC2 additional volumes on terminate | gone | will persist, even if root volume is instance
+| Can be stopped? | No; reboot or terminate only | Of course! |
+| Can upgrade EC2? | No; cannot stop instance | Of course!| 
 
 
+Fun facts:
+* You do not have to stop EC2 to make changes to the __root__ EBS volume
+  * Note: magnetic drive size cannot be changed; old tech
+* You can take a snapshot of a volume (best if stop the EC2 first)
+  * Now you can __move__ the new volume to diffent AZ and create a new EC2.
+  * Or you can __copy__ the snapshot to a __new region__.  
+  * Or you can __make an image__ (AMI) from the snapshot, and copy the AMI to a new __region__
+* EBS volumes are in the same AZ as the EC2 (kind of a duh moment)
+* If volume is encrypted, then all snapshots are encrypted
+  * cannot share encrypted snapshots
 
+## Encryption & Downtime
+Many resources can only have encrypt turned on at time of creation
+* EFS (elastic file system) : used when multiple EC2 share a file system
+* RDS: create new DB and migrate data
+* EBS volumes
+  * can migrate data from unencrypted to encrypted
+  * can make snapshot and copy snapshot.  At time of copy you can apply encryption
+
+Resources where encryption is more flexible
+* S3
+  * buckets
+  * objects
+
+## KMS vs. CloudHSM (hardware security modules)
+Generate, store, manage own crypto keys
+
+#### HSM
+* dedicated hardware; no multi-tenancy
+* super security - no free tier
+* FIPS (US govt standard)
+* asymmetric (can use different encryption algos & keys)
+
+#### KMS
+* shared hardware; 
+* multi-tenant managed service
+* protect confidentiality of your keys
+* symmetric (same encryption algos & keys)
+
+## AMI's
+Amazon machine image used to launch EC2 instance
+* template for the root volume, OS, applications
+* launch permissions: which AWS accounts can use the AMI (public, private, shared explicitly)
+* additional volumes attached
+* Amazon managed: Linux, Windows Server, etc
+
+How to:
+1. launch instance from existing AMI
+2. connect your instance and customize it (install apps, copy data, etc)
+3. create a custom AMI
+4. register your AMI before it can be used
+    * must register for every region you wish to use this AMI
+    * AMI's are per region only, but can be copied btw regions
+
+#### Sharing AMI's
+* Options: private (default), public, shared explicity with other AWS accounts, sold on market place
+* AMI's are stored in S3; not free
+* can copy AMI, but need read permission to owner's S3 or EBS snapshot
+* Limitations
+  * cannot copy/share encrypted AMI
+  * cannot copy Marketplace AMI's
+  * cannot copy licensed AMI's 
+    * OS: Windows, Red Hat
+    * Application: Windows SQL
+
+
+## Snowball
+* transfer 100TB+ data
+* Snowball Edge: comes with computing power.  Can use Lambda to do something to the data before it loads on to the Snowball
+
+## Storage Gateway:
+On prem software appliance to integrate with AWS services
