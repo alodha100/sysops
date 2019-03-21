@@ -685,3 +685,15 @@ How to:
 
 ## Storage Gateway:
 On prem software appliance to integrate with AWS services
+1. File Gateway - NFS/SMB (linux/windows)
+    * store files in S3
+2. Volume Gateway - iSCSI
+    * stored volumes: store everything local, then backup to AWS as EBS snapshot
+    * cached volumes: use S3 as primary storage, cache frequent access
+3. Tape Gateway - VTL (virtual tape library)
+    * offsite async backups to Glacier using EBS snapshots
+
+## Athena
+Query S3 using SQL
+* serverless, pay as you go, per TB scanned
+
