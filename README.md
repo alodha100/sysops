@@ -697,3 +697,31 @@ On prem software appliance to integrate with AWS services
 Query S3 using SQL
 * serverless, pay as you go, per TB scanned
 
+# Section 6: Security
+
+## Compliance Frameworks
+1. PCI - credit card payments
+2. ISO - 
+3. HIPAA - health care in US
+
+## DDoS
+#### Amplification / Reflection
+* attacker sends request from spoofed IP to NTP server.  NTP server sends a super large payload to the victim.  Attacker makes NTP server perform the attack for them.
+* attacker floods victim with GET requests
+* Slowloris attack: open many requests to victim and keep them open
+
+#### Mitigate
+* minimize attack surface area
+* be ready to absorb the attack
+* safeguard exposed resource
+* learn normal behavior of your system
+* detect abnormal behavior
+
+#### AWS Shield
+* Free service from AWS on all ELB, CloudFront, R53
+* Shield Advanced - $3k /mo
+
+## AWS Marketplace - Security Products
+* Pentesting: submit a request form to AWS
+* get hardened OS
+ 
