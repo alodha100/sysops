@@ -725,3 +725,44 @@ Query S3 using SQL
 * Pentesting: submit a request form to AWS
 * get hardened OS
  
+
+
+
+
+# Section 8: VPC's (skipping ahead...)
+Virtual network/data center in the cloud.
+
+#### (1) Connect to our VPC
+1. internet gateway - limit = 1
+2. virtual private gateway
+
+#### (2) Router
+
+#### (3) Router table
+
+#### (4) NACL (network access controller)
+* more granular control E.g.: block IP, country, etc
+* stateless: have to open inbound & outbound ports
+
+#### (5) Subnet (public or private)
+
+#### (6) Security Group
+* span multiple AZ
+* stateful: symmetrical, if port 80 is open.. it is open for both
+
+#### (7) Instance
+
+#### Multiple VPC's
+* can connect with direct network route using private IPs (VPC peering)
+* can connect to different AWS accounts
+* instances behave like on the same private network
+* no transitive peering (chaining), must have direct connect
+
+#### CIDR
+* [CIDR range calculator](http://cidr.xyz/)
+* AWS will reserve 5 IP address from your range.  First 4 & last 1
+
+|CIDR         | First    | Last         | Count |
+|-------------|----------|------------  |-------|
+| 10.0.0.0/16 | 10.0.0.1 | 10.0.255.254 | 65,536|
+| 10.0.0.0/24 | 10.0.0.1 | 10.0.0.254   | 256 |
