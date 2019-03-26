@@ -766,3 +766,35 @@ Virtual network/data center in the cloud.
 |-------------|----------|------------  |-------|
 | 10.0.0.0/16 | 10.0.0.1 | 10.0.255.254 | 65,536|
 | 10.0.0.0/24 | 10.0.0.1 | 10.0.0.254   | 256 |
+
+
+
+
+## Automation via CloudFormation
+Service that allows you to manage, configure, and provision your AWS infrastructure as code
+
+* YAML or JSON
+* `+ use version control on templates
+* `+ manage updates & dependancies
+* `+ rollback entire stack
+
+#### Creating a template
+1. make your template (JSON or YAML)
+2. upload to CF via S3
+3. CF reads the template and makes API calls on your behalf
+4. the resulting resources are called a `stack`
+
+* __AWSTemplateFormatVersion__: 2010-09-09  # always this
+* __Parameters__: # input values to give the template. E.g.: we are creating either ***prod*** or ***dev*** env 
+* __Conditions__: # decisions CF would make based on the params you give it
+* __Mappings__: # E.g.: set value based on region; think an if this, then that switch.  Use xxx AMI if in US-EAST-1
+* __Transform__: # run `snippets` of code outside the main template. E.g.: some Lambda or Snippet sitting in S3 bucket
+  * [Cloudformation Template Snippets](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/CHAP_TemplateQuickRef.html)
+* __Resources__: # Only required part!  The AWS resource you are deploying. E.g.: an EC2 instance
+* __Outputs__: # completely user defined. E.g.: output the instance ID of the EC2 we are creating
+
+#### CloudFormation Lab
+See the attached files
+
+#### Elastic Beanstalk
+
