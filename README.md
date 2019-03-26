@@ -725,11 +725,135 @@ Query S3 using SQL
 * Pentesting: submit a request form to AWS
 * get hardened OS
  
+## Custom IAM Lab
+1. create a `policy` with JSON.  E.g. create policy which S3 can READ & LIST
+2. attach the policy to a `role` E.g. create EC2 role and attach our policy
+3. create buckets
+4. launch EC2
+5. ssh into EC2
+6. try to `aws s3 ls`  Spoiler: it will fail
+7. attach role to EC2 and repeat the command
+8. new role __allows the command to be executed almost instantly__
+9. try to write a file to S3
+```
+echo "this is a file" > file.txt
+aws s3 cp file.txt s3://bjw-us-east
+>> OUTPUT >> operation: Access Denied
+```
+10. Update the policy to allow WRITE
+11. re-run the `s3 copy` and it works
+
+#### Exam tips
+* can change EC2 roles on the fly
+* create policies with the visual editor or directly with JSON
+* changing a policy or role will take affect immeditately
+
+## MFA
+* the QR code you use to setup your MFA can be re-used if you lose your phone
+* you can force users to have MFA turned on
+  * AWS Console (web) => IAM => select user => security creds => Assigned MFA
+  * from the command line
+    1. ssh into ec2
+    2. make sure `aws configure` user has privledges
+    3. generate the QR code 
+    ```
+    aws iam create-virtual-mfa-device --virtual-mfa-device-name ***mfa*** --outfile /home/ec2-user/QRCode.png --bootstrap-method QRCodePNG
+    ```
+    4. copy that to S3
+    5. apply the code to our user
+    ```
+    aws iam enable-mfa-device --user-name EC2-User --serial-number arn:aws:iam::"***USERIDHERE***":mfa/EC2-User --authentication-code-1 123456 --authentication-code-2 654321
+    ```
+* you can enable [MFA for command line operations](https://aws.amazon.com/premiumsupport/knowledge-center/authenticate-mfa-cli/), but you have to use STS (security token service)
+* you can download all your User details in IAM => `credential report`
+  * show all users
+  * last login
+  * MFA
+  * tons more
+
+## STS - Security Token Service
+Grant users `limited` & `temp` access to AWS resources.  Achieved using 1 of 3 ways:
+1. Federation (commonly by using Active Directory)
+    * uses SAML
+    * grants users access based on Active Directory creds
+    * SSO allows users to log in to AWS without IAM creds!
+2. Federation with Mobile Apps
+    * Facebook, Google, etc or really any OpenID provider
+3. Cross Account Access
+    * sharing AWS resources across different AWS accounts
+
+#### Vocab:
+* __Federation__: joining a list of users from one domain (IAM) to another domain (Active Directory)
+* __Identity Broker__: service that allows you to federate
+* __Identity Store__: service like FB or Google
+* __Identity__: the user
+
+#### Scenario:
+1. Hosting a website on EC2 in your VPC
+2. Users log into the website and it authenticates against companies active directory
+3. The VPC is connected to the company's AD using IPSEC VPN
+4. Once a user is logged in, they can access S3 bucket
+
+Set this up: We want an __Identity Broker__ to join existing user auth from company's Active Directory and an IAM
+
+1. user enters name/password on website
+2. Identity Broker verifies against Active Directory
+3. Identity Broker requests token from STS
+   * good for 1-36 hours
+   * returns policy with user permissions
+   * `GetFederationToken` is the function call
+4. user calls S3 using their STS   
+5. S3 verifies the STS has IAM permissions
+
+
+## Security and Logging
+1. CloudTrail - API calls
+2. Config - state of AWS configuration
+3. CloudWatch Logs - performance metrics
+4. VPC Flow Logs - network traffic
+
+* Always limit access to log files
+  * IAM users, groups, roles, & policies
+  * bucket policies
+  * MFA
+
+* Create alerts when logs are created or failed
+  * CloudTrail notifications
+  * AWS Config Rules
+* Alerts are specific, but do not leak too much detail (point to the log file location)
+* prevent log manipulation
+  * CloudTrail log file verification
+  * CloudTrail log file encryption
+
+## Hypervisor
+Virual Machine Monitor (VMM) or just a fancy way of saying the thing that manages (runs) your Virtual Machine(s).  The hypervisor is the __host__ and the each VM is called a __guest machine__.
+
+#### Xen Hypervisor
+The VMM which EC2 uses.  Xen can have guest OS's running either Paravirtual (PV) or using Hardware Virtual Machine (HVM)
+1. HVM: guests are fully virtualized.  The VM is on top the the hypervisor and not aware they are sharing processing time with other VMs
+2. PV: lighter form of virtualization and it used to be quicker (cannot do Windows VM).  Let's talk about `rings` for security
+    * ring 0: highest privledge, where host (Zen hypervisor) executes
+    * ring 1: EC2 instance
+    * ring 3: application on the instance (ring 2 is unknown)
+
+## Dedicated Instance vs. Dedicated Host
+    
+    
 
 
 
 
-# Section 8: VPC's (skipping ahead...)
+
+
+
+-----------------------
+skipping ahead ...
+-----------------------
+
+
+
+
+# Section 8: VPC's
 Virtual network/data center in the cloud.
 
 #### (1) Connect to our VPC
@@ -770,7 +894,8 @@ Virtual network/data center in the cloud.
 
 
 
-## Automation via CloudFormation
+## Section 9: Automation 
+### CloudFormation
 Service that allows you to manage, configure, and provision your AWS infrastructure as code
 
 * YAML or JSON
@@ -797,4 +922,11 @@ Service that allows you to manage, configure, and provision your AWS infrastruct
 See the attached files
 
 #### Elastic Beanstalk
+
+where did this go???
+
+
+#### OpsWorks
+* Automate server config with Puppet or Chef
+* AWS manages instances; you don't have to configure and operate the environment
 
