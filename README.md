@@ -3,10 +3,9 @@ These are my notes from the [acloudguru](https://acloud.guru) training on [udemy
 
 # Section 2: Monitoring and Reporting
 
-**CloudWatch**: monitoring service for all your AWS resources and applications you run.
+## CloudWatch: monitoring service for all your AWS resources and applications you run.
 
-## EC2
-
+### EC2
 EC2 default monitoring:
 1. CPU
 2. Network
@@ -19,21 +18,22 @@ Metrics are stored indefinitely by default.  Terminated EC2 or ELB instance metr
 
 Defaults: depends on service, some are 1, 3 or 5.  Custom metrics minimum is 1 min.
 
-**CloudWatch Alarms** can monitor any metric.  E.g.: CPU utilization on EC2, billing alert, etc.  They can then trigger an actions to be taken:
+#### CloudWatch Alarms
+can monitor any metric.  E.g.: CPU utilization on EC2, billing alert, etc.  They can then trigger an actions to be taken:
 1. send SNS
 2. run a lambda to smoke your infrastructure
 3. whatever!
 
 Tip: CloudWatch can be used to monitor on premise resources by installing the **SSM agent** can CloudWatch agent
 
-## Monitor EC2 with Custom Metrics
+#### Monitor EC2 with Custom Metrics
 Goal: have an EC2 instance send custom metrics to CloudWatch
 1. Create an IAM role for EC2 to write to CW
 2. Provision EC2 instance
   * use our role
   * use bootstrap script to install perl and perl scripts
 3. Log in to EC2
-  * don't forget to chmod 400 your pem  
+  * don't forget to `chmod 400` your pem  
 
 These metrics are found in: `CloudWatch => Browser Metrics (button) => All Metrics (tab) => Custom`
 
@@ -87,7 +87,7 @@ EBS types:
   * OK - normal
   * Warning - degraded, severely degraded
   * Impaired - stalled, not available
-* IOPS maths for CW: 1000 every 1 minute => 1000/60 IOPS
+* IOPS maths for CW: 1000 every 1 minute => 1000/60 IOPS => 16.3 IOPS
 
 You can now modify (capacity, type, IOPS performance, etc) EBS volumes **on the fly**!!! No longer have to stop EC2 to make changes.  How do we do this:
 1. issue modification command (console or command line)
@@ -121,7 +121,7 @@ Types:
 * load balancer adds or updates the `X-Amzn-Trace-Id` header before forwarding
 * **Application** load balancer only
 
-#### Four Ways to monitor:
+#### Four Ways to monitor ELB:
 1. CloudWatch (monitor performance)
   * when you spin up ELB, you default get CloudWatch.  No IAM required
 2. Access logs
@@ -640,11 +640,13 @@ Resources where encryption is more flexible
 ## KMS vs. CloudHSM (hardware security modules)
 Generate, store, manage own crypto keys
 
-#### HSM
+#### CloudHSM
 * dedicated hardware; no multi-tenancy
 * super security - no free tier
 * FIPS (US govt standard)
-* asymmetric (can use different encryption algos & keys)
+* offers both asymmetric (can use different encryption algos & keys) & symmetric
+  * public/private key are asymmetric
+* FIPS compliance
 
 #### KMS
 * shared hardware; 
@@ -913,11 +915,21 @@ Automated security assessment service based on best practices.  Produces a detai
 3. security (just like Inspector!)
 4. fault tolerance
 
-#### Shared Responsibility Model
-(stopped here section 70, this is so dry.... TODO)
+#### Shared Responsibility Model (for security)
+[AWS](https://aws.amazon.com/compliance/shared-responsibility-model/) manages security **of** the cloud, whereas you manage security **in** the cloud.  AWS provides the infrastructure security.
+
+Model changes, depending on which service type:
+
+1. __Infrastructure__: ECS, EBS, Auto Scaling, VPC - you own it.
+2. __Container__: EC2 - you don't manage the OS, but you own the network access to container
+3. __Abstracted__: S3, DynamoDB, SQS, SES - AWS owns it, but you own policies to access the services
+
+* RDS: you don't have to patch.  
+* PHP in Elasticbeanstock: don't have to patch
 
 
-
+#### Other Stuff
+1. AWS Artifact: on demand compliance document downloads (red herring exam question)
 
 
 
