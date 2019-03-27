@@ -242,7 +242,7 @@ Manage multiple AWS accounts by creating groups and applying policies to the gro
     - good for server-bound software licenses
 
 ## AWS Config  
-fully managed service that provides AWS resource inventory,config history, config change notification to enable security and governance
+fully managed service that provides AWS resource inventory,c onfig history, config change notification to enable security and governance
 
 [AWS FAQ](https://aws.amazon.com/config/faq/)
 
@@ -836,9 +836,63 @@ The VMM which EC2 uses.  Xen can have guest OS's running either Paravirtual (PV)
     * ring 1: EC2 instance
     * ring 3: application on the instance (ring 2 is unknown)
 
-## Dedicated Instance vs. Dedicated Host
-    
-    
+## Dedicated Instance vs. Dedicated Host (EC2)
+  
+| Instance     | Host |
+|-------------|----------|
+| run in VPC, on hardware dedicated to host | more control of how your physical server is placed on host     |
+| may share hardware within same AWS account | consistently deploy instances to the same physical hardware |
+| on demand, reserve instance, spot | enables server-bound sofware licenses |
+| | great for compliance & regulations |
+| | see sockets, cores, ID of server |
+| charge by instance | charge by host |
+
+
+## AWS System Manager EC2 Run Command
+Run command is for admin'ing many EC2 at once (on prem & AWS managed).  Automate common tasks and ad hoc config changes.  E.g.: installing apps, patches, join new instance to Windows domain.  Do not even have to RDP (login) to the system!
+* Pick the EC2 manually
+* Pick the EC2's by tag
+
+1. need IAM role to perform SysMgr tasks on EC2
+    * `AmazonEC2RoleforSSM`
+2. launch Win Server EC2    
+    * do **not** need to open RDP port for remote control of machine
+3. go to **Run Command**
+    * pick a `command document`. E.g.: AWS-ConfigureCloudWatch
+    * set our target (Win EC2)
+    * Run
+
+#### Requirements
+1. Have to have IAM role for SSM
+2. Have to have SSM agent running on instance
+
+
+## AWS System Manager Parameter Store
+Storing secrets (users, passwords, license keys, etc) found in EC2 section
+1. string
+2. list of string
+3. secure string (cannot see value after entered) using KMS
+
+## AWS Config with S3
+Compliance by adding rules
+#### Good ones for S3
+* s3-bucket-public-write-prohibited
+* s3-bucket-public-read-prohibited
+
+## Presigned URL
+Say you want your SDK (Python) to access secured item in S3.  Authenticate with Presigned URL!
+1. create role.  E.g. policy: `AmazonS3FullAccess`
+2. create EC2 with role
+3. ssh into EC2
+    * `aws s3 mb s3://bjw-cli` # make a bucket
+    * `echo "this is a file" > file.txt` # make a local file
+    * `aws s3 cp file.txt s3://bjw-cli` # copy local file to S3
+    * `aws s3 ls s3://bjw-cli` # verify file is in S3
+    * try to open file from web S3.  Spoiler: cannot, it is private
+    * `aws s3 presign s3://bjw-cli/file.txt --expires-in 300` # presign the file for 300 seconds. This will return a URL
+    * follow the URL, can see file.  Did not have to change bucket policy, file permissions, etc
+
+##  Trust Advisor vs. Inspector
 
 
 
@@ -846,11 +900,21 @@ The VMM which EC2 uses.  Xen can have guest OS's running either Paravirtual (PV)
 
 
 
------------------------
-skipping ahead ...
------------------------
 
 
+
+
+
+
+
+
+
+
+
+
+
+# Section 7 Networking & Route 53
+TODO
 
 
 # Section 8: VPC's
@@ -891,7 +955,7 @@ Virtual network/data center in the cloud.
 | 10.0.0.0/16 | 10.0.0.1 | 10.0.255.254 | 65,536|
 | 10.0.0.0/24 | 10.0.0.1 | 10.0.0.254   | 256 |
 
-
+TODO
 
 
 ## Section 9: Automation 
@@ -922,8 +986,18 @@ Service that allows you to manage, configure, and provision your AWS infrastruct
 See the attached files
 
 #### Elastic Beanstalk
+* Used for scaling web apps in Java, .NET, PHP, Node.js, Python, Ruby, Go, Docker
+* Simply upload your existing code and AWS will do the rest
+* Fast, simple way to deploy
+* EBeanstalk will auto: 
+  * scale (up/down)
+  * update platforms.  E.g.: Java
+    * also update your server E.g.: Tomcat, Nginx, IIS
+  * monitor via dashboard
+    * X-Ray 
+    * CloudWatch
 
-where did this go???
+You can take over control if you don't want auto mode turned on
 
 
 #### OpsWorks
