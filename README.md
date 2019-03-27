@@ -892,12 +892,29 @@ Say you want your SDK (Python) to access secured item in S3.  Authenticate with 
     * `aws s3 presign s3://bjw-cli/file.txt --expires-in 300` # presign the file for 300 seconds. This will return a URL
     * follow the URL, can see file.  Did not have to change bucket policy, file permissions, etc
 
-##  Trust Advisor vs. Inspector
+## Trusted Advisor vs. Inspector
+Guess which service we're talking about based on the details
 
+#### Amazon Inspector (think **security** and install agent on instance)
+Automated security assessment service based on best practices.  Produces a detailed list of security findings based on priority.  
+1. create target E.g. ec2 instance
+2. install agent on target (creates the role) using Run Command
+    * alternatively: ssh into instance and [follow instructions](https://docs.aws.amazon.com/inspector/latest/userguide/inspector_installing-uninstalling-agents.html#install-linux).
+3. create an `assessment template`
+   * pick pre-defined package like "Best Practices" or "Hardened OS Benchmarks", etc
+4. perform the `assessment run`
+   * default time is an hour
+5. review the findings against the rules
+   * create a 600+ page pdf report, SHIZZAM
 
+#### Trusted Advisor (think **performance**)
+1. cost optimize
+2. performance
+3. security (just like Inspector!)
+4. fault tolerance
 
-
-
+#### Shared Responsibility Model
+(stopped here section 70, this is so dry.... TODO)
 
 
 
@@ -1004,3 +1021,9 @@ You can take over control if you don't want auto mode turned on
 * Automate server config with Puppet or Chef
 * AWS manages instances; you don't have to configure and operate the environment
 
+
+
+## Exam Practice
+1. [WhizLabs](https://www.whizlabs.com/aws-sysops-administrator-associate/free-test/) with 10 free ones
+2. [Udemy](https://www.udemy.com/aws-certified-sysops-administrator-associate-practice-exams-soa-c01/) with high reviews
+3. [Udemy](https://www.udemy.com/aws-certified-sysops-administrator-2018-practice-questions/) with questionable reviews
