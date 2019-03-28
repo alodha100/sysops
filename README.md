@@ -943,7 +943,13 @@ Model changes, depending on which service type:
 
 
 # Section 7 Networking & Route 53
-TODO
+#### Review
+* SOA records
+  1. name of server that supplied the data for zone
+  2. admin of the zone (contact details for domain)
+  3. TTL
+* NS records
+
 
 
 # Section 8: VPC's
