@@ -984,7 +984,64 @@ Virtual network/data center in the cloud.
 | 10.0.0.0/16 | 10.0.0.1 | 10.0.255.254 | 65,536|
 | 10.0.0.0/24 | 10.0.0.1 | 10.0.0.254   | 256 |
 
-TODO
+#### NAT Instance (old) & NAT Gateway (current)
+* NAT Instance: EC2 instance using a NAT Instance AMI
+  * make new EC2 in public subnet w/ ssh, http, https
+  * disable EC2 "source/dest check"
+  * why this way sucks:
+    * single instance 
+    * single AZ 
+    * single throughput
+    * single point of failure
+* NAT Gateway
+  * auto scaling
+  * AWS managed; no patch, no secgrp
+  * Need to make multiple GWs in multiple AZ
+
+#### Access Control List (ACL)
+
+
+## Make a VPC
+
+1. create new vpc 10.0.0.0/16 (largest range)
+    * router
+    * default (main) Route Table
+    * Network ACL
+2. put some subnets into vpc
+    * Subnet 1: 10.0.1.0/24
+    * Subnet 2: 10.0.2.0/24
+3. make an Internet Gateway (can only have 1)
+    * attach to vpc
+4. make new route table
+    * connect to subnet 1 (override default route table)
+5. connect IGW to our route table
+    * Dest: 0.0.0.0/0     # IP4
+    * Dest: ::/0          # IP6
+    * Target: our IGW
+6. associate subnet 1 with our route table (now has public access)
+7. turn on "auto assign IP" for subnet 1
+8. create security group for subnet 2 which allows subnet to talk
+    * Type: ssh
+    * IP: 10.0.1.0/24
+9. Test it out: ssh into subnet 1 and jump over to subnet 2 (from 1)    
+10. Give subnet 2 a bastion (jump box) host
+    * **NAT instance** (old): 
+      * create EC2 with NAT AMI in subnet 1
+      * from default route table (one subnet 2 is using), we need a route out
+        * Dest: 0.0.0.0/0
+        * Target: NAT instance
+    * **NAT Gateway** (current IP4):
+      * create NAT GW from VPC menu
+      * put in public subnet
+      * create new elastic IP address
+      * from default route table (one subnet 2 is using), we need a route out
+        * Dest: 0.0.0.0/0
+        * Target: NAT gateway
+
+    * **Egress Only Internet GW** (current IP6):
+      * dunno, mate
+
+
 
 
 ## Section 9: Automation 
