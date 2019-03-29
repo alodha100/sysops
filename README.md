@@ -355,7 +355,7 @@ Host located in your public subnet with a route to the internet via gateway.  Us
 Equal distribution of work load across resources
 
 1. Application LB - layer 7; inspect packets of HTTP header
-2. Network LB - layer 4; transport layer, TCP, super fast, super $$$
+2. Network LB - layer 4; transport layer, TCP, super fast, super $$$; static IP
 3. Class LB - layer 4 & 7; but features for layer 7 are weak sauce `X-Forwarded` and `sticky sessions`
 
 You can `pre-warm` your ELBs by contacting AWS if you expect a massive surge in traffic to ensure your ELB can handle the traffic.  You have to contact AWS support to do this.
@@ -1063,6 +1063,35 @@ Inside of my public VPC, I want to interact with S3.  As it stands, my traffic w
     * go back to private ec2
     * `aws s3 ls` works because we have internal AWS connection (endpoint), yeet! 
 
+
+#### VPC Flow Logs
+Network traffic (IPs) stored in CloudWatch Logs.  Can be 3 different levels:
+1. VPC
+2. Subnet
+3. Network Interface
+Do the thing:
+1. select your VPC => Action => Flow Log
+2. create a role (can do this here)
+3. create a CloudWatch (have to go to CW)
+Exam Tips:
+* cannot flow log a peered VPC
+* cannot change IAM 
+* not all IP traffic is monitored
+  * Amazon DNS
+  * Windows license activation
+  * metadata for 169.254.169.254
+  * DHCP
+  * reserved IP traffic
+
+#### NAT vs Bastion
+
+|NAT instance|Bastion|
+|-|-|
+| create a special type of EC2 | create 1 hardened public instance, then jump to private instances|
+| Expose Internet traffic for EC2 | SSH or RDP into the bastion, then jump |
+|almost retired| |
+
+
 ## Make a VPC
 
 1. create new vpc 10.0.0.0/16 (largest range)
@@ -1099,7 +1128,6 @@ Inside of my public VPC, I want to interact with S3.  As it stands, my traffic w
       * from default route table (one subnet 2 is using), we need a route out
         * Dest: 0.0.0.0/0
         * Target: NAT gateway
-
     * **Egress Only Internet GW** (current IP6):
       * dunno, mate
 11. Stop using default NACL (it's 100% open)
@@ -1124,9 +1152,10 @@ Inside of my public VPC, I want to interact with S3.  As it stands, my traffic w
     |300|**Custom TCP (1024-65535)**| 0.0.0.0/0| ALLOW |
 
     WTF is the custom outbound rule 300?  **[Ephemeral ports](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html#nacl-ephemeral-ports)** is the client port number which is randomized.  Basically, when the client makes HTTP request, our server sends back the response on a random port number which the client tells us.  The range 1024-65535 will support all OS's.
-      * now that we have a custom NACL, associate it to our public subnet.
-      * if we create a `Rule 99` this would supercede all other rules
-        * Rule 99, http (80), ###.###.###.###/32, deny
+
+    * now that we have a custom NACL, associate it to our public subnet.
+    * if we create a `Rule 99` this would supercede all other rules
+      * Rule 99, http (80), ###.###.###.###/32, deny
       
 
 
