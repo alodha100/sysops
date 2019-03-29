@@ -1028,8 +1028,40 @@ Virtual network/data center in the cloud.
   * AWS managed; no patch, no secgrp
   * Need to make multiple GWs in multiple AZ
 
-#### Access Control List (ACL)
+#### Network Access Control List (NACL)
+* Get first one by default; which allows everything.  
+  * when you create a NACL, it denies everything
+* Sits outside of subnet.  
+* Each subnet can only have 1 NACL
+* Inbound/Outbound rules are asymetric
 
+#### VPC endpoint
+Inside of my public VPC, I want to interact with S3.  As it stands, my traffic would leave my internal VPC, go to the outside internet, then re-enter the AWS landscape to talk with S3.  We can create a gateway to talk directly with S3, all while staying inside of AWS land.
+1. create a role
+    * allow ec2 to do whatever with S3
+    * apply role to private ec2
+2. test the role
+    * `aws s3 ls` works because we have a NAT GW/Instance out to the interwebs
+    * make sure the NAT GW/instance is off
+      * vpc => mysubnet => route table => delete 0.0.0.0/0 & NAT
+    * ssh into private ec2 (from public)
+    * `aws s3 ls` won't work (as intended)
+3. create the Endpoint
+    * VPC => Endpoint    
+    * choose between:
+      1. interface: elastic network interface (ENI)
+      2. gateway: much like NAT gateway, AWS managed
+    * search by `Service Name : *.s3`
+
+      | Name | Owner | Type |
+      |---|--|--|
+      | com.amazonaws.us-east-1.s3 | amazon | Gateway |
+    * pick our VPC
+    * pick our default/main route table (that one is not public)
+    * go back and look at the main route table, it should have updated the routes to point to the endpoint
+4. verify endpoint
+    * go back to private ec2
+    * `aws s3 ls` works because we have internal AWS connection (endpoint), yeet! 
 
 ## Make a VPC
 
@@ -1070,8 +1102,32 @@ Virtual network/data center in the cloud.
 
     * **Egress Only Internet GW** (current IP6):
       * dunno, mate
+11. Stop using default NACL (it's 100% open)
+    * make new NACL
+    * create rules (asymetric)
+      * lowest rule = highest priority
+    
+    INBOUND rules (starting at 100)
 
+    |Rule|Type|Source|Which|
+    |--|-|-|-|
+    |100| HTTP (80) | 0.0.0.0/0 | ALLOW |
+    |200|HTTPS (443)|0.0.0.0/0 |ALLOW |
+    |300|SSH (22)| 0.0.0.0/0| ALLOW |
+  
+    OUTBOUND rules (starting at 100)
 
+    |Rule|Type|Source|Which|
+    |--|-|-|-|
+    |100| HTTP (80) | 0.0.0.0/0 | ALLOW |
+    |200|HTTPS (443)|0.0.0.0/0 |ALLOW |
+    |300|**Custom TCP (1024-65535)**| 0.0.0.0/0| ALLOW |
+
+    WTF is the custom outbound rule 300?  **[Ephemeral ports](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html#nacl-ephemeral-ports)** is the client port number which is randomized.  Basically, when the client makes HTTP request, our server sends back the response on a random port number which the client tells us.  The range 1024-65535 will support all OS's.
+      * now that we have a custom NACL, associate it to our public subnet.
+      * if we create a `Rule 99` this would supercede all other rules
+        * Rule 99, http (80), ###.###.###.###/32, deny
+      
 
 
 ## Section 9: Automation 
