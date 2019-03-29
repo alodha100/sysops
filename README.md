@@ -932,24 +932,48 @@ Model changes, depending on which service type:
 1. AWS Artifact: on demand compliance document downloads (red herring exam question)
 
 
-
-
-
-
-
-
-
-
-
-
 # Section 7 Networking & Route 53
 #### Review
 * SOA records
   1. name of server that supplied the data for zone
   2. admin of the zone (contact details for domain)
-  3. TTL
-* NS records
+  3. TTL - how long the DNS record is cached
+* NS records (name server) - used by top level domain to direct traffic to the content DNS server
+* A record (address) - translate domain to IP address
+Fun fact: ELB only use DNS; never has IP4/6 address because AWS will manage all that behind the scenes.  Moreover, you never use A record.  Instead use AS record 
+* CName - make one site point to another (instead of two A records) `mail.google.com => google.com/mail`
+* Alias Record - AWS term, much like a CName.  Good for mapping `example.com => elb23523.elb.amazonaws.com`
+    * created because you cannot make a CName to a naked domain `example.com`.  CName has to map to IPv4, which your load balancer will never give you.  This is a circular problem =(
+    * also great because as AWS changes IP address for your load balance, R53 with auto update too!
+    * Alias records are *free*, CName will cost you.  
+    * Always use Alias records
 
+#### Lab
+Start multiple EC2s across multiple regions and zones
+
+```
+#!/bin/bash
+yum update -y
+yum install httpd -y
+cd var/www/html/
+echo "web 01 - N. Virg" > index.html
+service httpd start
+chkconfig httpd on    
+```
+| Name | IP | Zone |
+|------|----|------|
+| web01 | 35.175.150.185 | us-east-1 |
+| web02 | 3.83.123.160   | us-east-1 |
+| web03 | 34.237.245.107 | us-east-1 |
+| web04 | 18.130.57.158  | eu-west-2 (london) |
+
+### Routing
+1. **Simple**: can only use a single record with multiple IP addresses and returns all values **randomly**
+2. **Weighted**: percentage based routing.  20% goes to A, 80% goes to B.  
+3. **Latency**: lowest ping wins.  You can put multiple IP in a single region. E.g.: web01, web02, web03 all go into region for US-East.  web04 goes into separate London region.  How does r53 pick for which instance within US-East region?  Probably simple.  Who knows
+4. **Failover**: disaster recovery using health checks.  If `primary` site is dead, route to `secondary`
+5. **Geolocation**: based on where client DNS query originates.  Best to set a default record
+6. **Multi-value**: simple with failover.  If one fails, it is removed from list of valid returned simple options
 
 
 # Section 8: VPC's
