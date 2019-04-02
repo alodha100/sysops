@@ -242,7 +242,7 @@ Manage multiple AWS accounts by creating groups and applying policies to the gro
     - good for server-bound software licenses
 
 ## AWS Config  
-fully managed service that provides AWS resource inventory,c onfig history, config change notification to enable security and governance
+fully managed service that provides AWS resource inventory, config history, config change notification to enable security and governance
 
 [AWS FAQ](https://aws.amazon.com/config/faq/)
 
@@ -1206,8 +1206,28 @@ You can take over control if you don't want auto mode turned on
 * AWS manages instances; you don't have to configure and operate the environment
 
 
+## Gaps: Topcis Not Covered
+* **Amazon Redshift** is a fully managed, petabyte-scale **data warehouse** service in the cloud. You can start with just a few hundred gigabytes of data and scale to a petabyte or more. This enables you to use your data to acquire new insights for your business and customers.
+* **Elastic MapReduce** (EMR) is a managed cluster platform that simplifies running big data frameworks, such as Apache Hadoop and Apache Spark, on AWS to process and analyze vast amounts of data.
+* **Elastic IP** When an EC2 is stopped, it will be assigned a new IPv4.  So we use EIP for mapping to R53. Currently do not support Elastic IP addresses for IPv6.
+* **DynamoDB**:  When you create a **global table**, you specify the AWS regions where you want the table to be available. DynamoDB performs all of the necessary tasks to create identical tables in these regions, and propagate ongoing data changes to all of them.  **Autoscaling**: Application Auto Scaling issues an `UpdateTable` request to adjust your table's provisioned throughput.
+* You can have an IAM user assume a role for X seconds
+* **VPC Endpoint** enables you to privately connect your VPC to supported AWS services and VPC endpoint services powered by PrivateLink without requiring an internet gateway, NAT device, VPN connection, or AWS Direct Connect connection. There are two types of VPC endpoints: interface endpoints and gateway endpoints. Create the type of VPC endpoint required by the supported service.
+  * Gateway: S3 & DynamoDB
+  * Interface: everything else
+* Compare AWS [plans](https://aws.amazon.com/premiumsupport/plans/)
+  * Business: 24*7 support; 1 hr
+  * Enterprise: < 15 minute
+* AWS **Cost Explorer** has an easy-to-use interface that lets you visualize, understand, and manage your AWS costs and usage over time. 
+* **AWS Artifact** is your go-to, central resource for compliance-related information that matters to you. It provides on-demand access to AWS’ security and compliance reports and select online agreements. Reports available in AWS Artifact include our Service Organization Control (SOC) reports, Payment Card Industr
 
 ## Exam Practice
-1. [WhizLabs](https://www.whizlabs.com/aws-sysops-administrator-associate/free-test/) with 10 free ones
+1. [WhizLabs](https://www.whizlabs.com/aws-sysops-administrator-associate/free-test/) with 10 free ones (this one is AWESOME)
 2. [Udemy](https://www.udemy.com/aws-certified-sysops-administrator-associate-practice-exams-soa-c01/) with high reviews
 3. [Udemy](https://www.udemy.com/aws-certified-sysops-administrator-2018-practice-questions/) with questionable reviews
+
+
+### Config vs. Trusted Advisor vs. Inspector
+* Config: compliance
+* Trusted Advisor: make suggestions
+* Inspector: use templates for best practices
