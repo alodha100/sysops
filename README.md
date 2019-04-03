@@ -149,25 +149,25 @@ Caching popular DB queries via Memcached or Redis
 
 Types:
 1. CPU utilization
-  * Memcached: multi-threaded; if load exceeds 90% you have to add more nodes to your cluster
-  * Redis: single-threaded; take 90 divided by number of cores
-    * E.g.: `cache.m1.xlarge.node` has four cores.  The CPU utilization threshold would be 22.5% (90% / 4 cores)
+    * Memcached: multi-threaded; if load exceeds 90% you have to add more nodes to your cluster
+    * Redis: single-threaded; take 90 divided by number of cores
+      * E.g.: `cache.m1.xlarge.node` has four cores.  The CPU utilization threshold would be 22.5% (90% / 4 cores)
 2. Swap usage: the amount of the swap file used, duh
-  * disk space reserved for when out of RAM
-    * size of disk space should be the same as RAM size
+    * disk space reserved for when out of RAM
+      * size of disk space should be the same as RAM size
   * Memcached: 
     * should be 0, no more than 50Mb
     * if over 50Mb, increase ['memcached_connections_overhead'](https://docs.aws.amazon.com/AmazonElastiCache/latest/mem-ug/ParameterGroups.ListingGroups.html)
     * Redis: has no SwapUsage metric, use `reserved-memory`
 3. Evictions
-  * Let's you know when new cache item is added and old one is booted
-  * Memcached: 
-    * scale up by increasing memory size 
-    * scale out by adding nodes
-  * Redis: can only scale **out** by adding read replicas
+    * Let's you know when new cache item is added and old one is booted
+    * Memcached: 
+      * scale up by increasing memory size 
+      * scale out by adding nodes
+    * Redis: can only scale **out** by adding read replicas
 4. Concurrent connections
-  * set alarm based on number of connections.  This would suggest a spike in traffic or application is not releasing connections like it should be.
-  * **Exam Tip**: remember to set an alarm on the number of concurrent connections for elasticache.
+    * set alarm based on number of connections.  This would suggest a spike in traffic or application is not releasing connections like it should be.
+    * **Exam Tip**: remember to set an alarm on the number of concurrent connections for elasticache.
 
 [Monitoring Elasticache](https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/CacheMetrics.html) by AWS
 
@@ -193,12 +193,11 @@ Manage multiple AWS accounts by creating groups and applying policies to the gro
     * these **Service Control Policies (SCP)** will trump IAM policies
 3. Automate account creation and management.  Great for when adding new staff.  New hire gets all the permissions/policies of their group.
 4. Consolidate billing across multiple accounts (helps for volume discounting)
-
-* add other AWS accounts to the root organization AWS account
-* create policy across all accounts
-  * create a deny/allow Kenesis policy
-  * enable the policy on the root account
-  * apply the new policy to the organizations you want
+    * add other AWS accounts to the root organization AWS account
+    * create policy across all accounts
+      * create a deny/allow Kenesis policy
+      * enable the policy on the root account
+      * apply the new policy to the organizations you want
 
 
 ## AWS Resource Groups & Tagging
@@ -311,10 +310,11 @@ It shows a __timeline__ for when things are changed.  In our example, Config rep
 
 # Section 3: Deployment & Provisioning
 Things I was iffy on for EC2:
-* Placement group: put instances in same AZ for less latency.  
-  * Spread
-  * Cluster
-* T2/T3 Unlimited: burst CPU (I think you use credits)
+* Placement group: put all instances in same AZ for less latency.  
+  * Spread: same AZ. same hardware
+  * Cluster: same AZ, different hardware
+  * Try to make all EC2 istances the same type
+* T2/T3 Unlimited: burstable CPU performance.  Have to keep average CPU utilization within bounds  ~~I think you use credits~~
 
 Let's fire up an Apache Website
 ```
@@ -361,7 +361,7 @@ Equal distribution of work load across resources
 You can `pre-warm` your ELBs by contacting AWS if you expect a massive surge in traffic to ensure your ELB can handle the traffic.  You have to contact AWS support to do this.
 
 **IP address**: Application LB have changing IP addresses as they are brought into service.  Network LB get **static IP** address (one per subnet).  This makes firewall rules are a breeze.  You can put a ALB behind a NLB to get the best of both worlds.  
-**Exam tip**: if it needs static, you need need Network LB.
+**Exam tip**: if it needs static IP, you should use Network LB.
 
 ### ELB Error Messages:
 * **4xx** client side error; think 404 for bad URL (client mistake)
@@ -426,11 +426,11 @@ How to:
 2. CloudTrail
 3. Personal Health: operational notices about the regions I have resources
 4. Trusted Advisor: makes suggestions for compliance such as S3 permissions, EC2 access, security group open ports, etc
-  * cost optimize (not free account)
-  * performance (not free account)
-  * security
-  * fault tolerance (not free account)
-  * service limits (too many EC2 instances)
+    * cost optimize (not free account)
+    * performance (not free account)
+    * security
+    * fault tolerance (not free account)
+    * service limits (too many EC2 instances)
 5. Inventory  
 6. Compliance
 
@@ -461,7 +461,7 @@ How to:
 * **Scalability**: increase Instance size, use reserve instances
 
 ### DynamoDB
-* **Elasticity**: increase IOPS for traffice spikes, decrease after
+* **Elasticity**: increase IOPS for traffic spikes, decrease after
 * **Scalability**: infinite size of storage
 
 ### RDS
@@ -1069,6 +1069,7 @@ Network traffic (IPs) stored in CloudWatch Logs.  Can be 3 different levels:
 1. VPC
 2. Subnet
 3. Network Interface
+
 Do the thing:
 1. select your VPC => Action => Flow Log
 2. create a role (can do this here)
@@ -1220,9 +1221,10 @@ You can take over control if you don't want auto mode turned on
   * Enterprise: < 15 minute
 * AWS **Cost Explorer** has an easy-to-use interface that lets you visualize, understand, and manage your AWS costs and usage over time. 
 * **AWS Artifact** is your go-to, central resource for compliance-related information that matters to you. It provides on-demand access to AWS’ security and compliance reports and select online agreements. Reports available in AWS Artifact include our Service Organization Control (SOC) reports, Payment Card Industr
+* **AWS Data Pipeline** is a web service that you can use to automate the movement and transformation of data. With AWS Data Pipeline, you can define data-driven workflows, so that tasks can be dependent on the successful completion of previous tasks. You define the parameters of your data transformations and AWS Data Pipeline enforces the logic that you've set up.
 
 ## Exam Practice
-1. [WhizLabs](https://www.whizlabs.com/aws-sysops-administrator-associate/free-test/) with 10 free ones (this one is AWESOME)
+1. [WhizLabs](https://www.whizlabs.com/aws-sysops-administrator-associate/free-test/) with 10 free ones (this one is so-so.  I have found multiple wrong answers)
 2. [Udemy](https://www.udemy.com/aws-certified-sysops-administrator-associate-practice-exams-soa-c01/) with high reviews
 3. [Udemy](https://www.udemy.com/aws-certified-sysops-administrator-2018-practice-questions/) with questionable reviews
 
